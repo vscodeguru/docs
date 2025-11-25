@@ -1,0 +1,315 @@
+{
+    "title": "Property Management Portal Splunk Monitoring Board",
+    "description": "",
+    "inputs": {
+        "input_DateTime": {
+            "options": {
+                "defaultValue": "-24h@h,now",
+                "token": "dateTimeRange"
+            },
+            "title": "Date/Time Range",
+            "type": "input.timerange"
+        },
+        "input_Environement": {
+            "options": {
+                "defaultValue": "corp_digital_pm_qa",
+                "items": [
+                    {
+                        "label": "All",
+                        "value": "corp_digital_pm_*"
+                    },
+                    {
+                        "label": "DEV",
+                        "value": "corp_digital_pm_dev"
+                    },
+                    {
+                        "label": "QA",
+                        "value": "corp_digital_pm_qa"
+                    },
+                    {
+                        "label": "PROD",
+                        "value": "corp_digital_pm_prod"
+                    }
+                ],
+                "token": "env"
+            },
+            "title": "Select the Environment",
+            "type": "input.dropdown"
+        }
+    },
+    "defaults": {
+        "dataSources": {
+            "ds.search": {
+                "options": {
+                    "queryParameters": {}
+                }
+            }
+        }
+    },
+    "visualizations": {
+        "viz_apisTraficArea": {
+            "dataSources": {
+                "primary": "ds_apisTrafic"
+            },
+            "options": {
+                "legend": {
+                    "position": "right"
+                },
+                "legendDisplay": "off",
+                "stackMode": "stacked",
+                "xAxisTitleText": "timeperiod"
+            },
+            "title": "API Traffic",
+            "type": "splunk.area"
+        },
+        "viz_mostUsedApisArea": {
+            "dataSources": {
+                "primary": "ds_mostUsedApis"
+            },
+            "options": {
+                "legend": {
+                    "position": "right"
+                },
+                "xAxisTitleText": "timeline",
+                "y": "> primary | frameBySeriesNames('/addlocations','/cancelpendingremoval','/getAvgMonthlyBill','/getOrderDateAvailability','/getServiceOrderHistory','/getaddressautosuggest','/getagreements','/getagreementsbypremisenumbers','/getagreementsbyssn','/getcoarsegrainedaddress','/getlocations','/getsummaryoflocations','/removelocations','/sendEmailUpdateEmail','/sendRegistrationConfirmationEmail','/submitLandlordConnect','/updateAgreement','/updateUserCommAndReports','/updateuseragreementsinfr')",
+                "y2": "> primary | frameBySeriesNames('')",
+                "yAxisTitleText": "count"
+            },
+            "title": "Most Used APIs Over Time",
+            "type": "splunk.area"
+        },
+        "viz_topApiErrors": {
+            "context": {
+                "countColumnFormatEditorConfig": {
+                    "number": {
+                        "thousandSeparated": false,
+                        "unitPosition": "after"
+                    }
+                },
+                "errorColumnFormatEditorConfig": {
+                    "string": {
+                        "unitPosition": "after"
+                    }
+                }
+            },
+            "dataSources": {
+                "primary": "ds_topApiErrors"
+            },
+            "eventHandlers": [
+                {
+                    "options": {
+                        "newTab": true,
+                        "type": "auto"
+                    },
+                    "type": "drilldown.linkToSearch"
+                }
+            ],
+            "options": {
+                "columnFormat": {
+                    "count": {
+                        "align": "right",
+                        "data": "> table | seriesByName(\"count\") | formatByType(countColumnFormatEditorConfig)",
+                        "headerAlign": "auto",
+                        "textOverflow": "ellipsis",
+                        "width": 80
+                    },
+                    "error": {
+                        "align": "auto",
+                        "data": "> table | seriesByName(\"error\") | formatByType(errorColumnFormatEditorConfig)",
+                        "headerAlign": "auto",
+                        "textOverflow": "ellipsis"
+                    }
+                },
+                "showColumnHeader": true,
+                "showRowNumber": false,
+                "tableFormat": {
+                    "align": "right",
+                    "headerAlign": "right"
+                }
+            },
+            "title": "Top API Errors (Error, Count)",
+            "type": "splunk.table"
+        },
+        "viz_topApiErrorsUrl": {
+            "dataSources": {
+                "primary": "ds_topApiErrorsUrl"
+            },
+            "eventHandlers": [
+                {
+                    "options": {
+                        "newTab": true,
+                        "type": "auto"
+                    },
+                    "type": "drilldown.linkToSearch"
+                }
+            ],
+            "options": {
+                "columnFormat": {
+                    "count": {
+                        "align": "right",
+                        "data": "> table | seriesByName(\"count\") | formatByType(countColumnFormatEditorConfig)",
+                        "headerAlign": "auto",
+                        "textOverflow": "ellipsis",
+                        "width": 80
+                    },
+                    "error": {
+                        "align": "auto",
+                        "data": "> table | seriesByName(\"error\") | formatByType(errorColumnFormatEditorConfig)",
+                        "headerAlign": "auto",
+                        "textOverflow": "ellipsis"
+                    }
+                },
+                "eventHandlers": [
+                    {
+                        "options": {
+                            "tokens": [
+                                {
+                                    "key": "row.api",
+                                    "token": "drill_api"
+                                },
+                                {
+                                    "key": "row.error",
+                                    "token": "drill_error"
+                                }
+                            ]
+                        },
+                        "type": "drilldown.setToken"
+                    }
+                ],
+                "showColumnHeader": true,
+                "showRowNumber": false,
+                "tableFormat": {
+                    "align": "right",
+                    "headerAlign": "right"
+                }
+            },
+            "title": "Top API Errors With Url (API, Error, Count)",
+            "type": "splunk.table"
+        }
+    },
+    "dataSources": {
+        "ds_apisTrafic": {
+            "name": "ApisTrafficSearch",
+            "options": {
+                "query": "index=$env$\n| spath\n| spath path=file output=f\n| search f=\"SplunkInterceptor\"\n| spath path=sourcetype output=st\n| search st=\"pmp:api:logs\"\n| spath path=apiDetails.url output=api_url\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\n| eval api_path = replace(api_path, \"\\?.*$\", \"\")\n| eval api_path = if(isnull(api_path) OR api_path=\"\", \"NULL\", api_path)\n| timechart span=1h count",
+                "queryParameters": {
+                    "earliest": "$dateTimeRange.earliest$",
+                    "latest": "$dateTimeRange.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ds_errorDrilldown": {
+            "name": "ErrorDrilldownSearch",
+            "options": {
+                "query": "index=$env$\n| spath\n| spath path=file output=f\n| search f=\"SplunkInterceptor\"\n| spath path=sourcetype output=st\n| search st=\"pmp:api:logs\"\n| spath path=level output=logLevel\n| search logLevel=\"ERROR\"\n| spath path=apiDetails.url output=api\n| spath path=apiDetails.body.errorDetails.errorDetails.message output=err_msg_deep\n| spath path=apiDetails.body.errorDetails.errorDetails.code output=err_code_deep\n| spath path=apiDetails.body.errorDetails.errorDetails.type output=err_type_deep\n| spath path=apiDetails.body.errorDetails.error output=err_msg_simple\n| spath path=apiDetails.body.code output=err_code_simple\n| spath path=apiDetails.body.type output=err_type_simple\n| spath path=apiDetails.body{}.report.message output=report_err_msgs\n| spath path=apiDetails.body.statusCode output=statusCode\n| spath path=apiDetails.correlationID output=correlationID\n| spath path=username output=username\n| spath path=sessionID output=sessionID\n| eval api = if(isnull(api) OR api=\"\", \"NULL\", api)\n| eval error_raw = coalesce(err_msg_deep, err_msg_simple, mvindex(report_err_msgs, 0))\n| eval error_raw = if(error_raw=\"\", null(), error_raw)\n| eval error = coalesce(\n    error_raw,\n    err_type_deep . \" (code=\" . err_code_deep . \")\",\n    err_type_simple . \" (code=\" . err_code_simple . \")\",\n    \"UNKNOWN_ERROR\"\n  )\n| where \"$drill_api$\"=\"ALL_APIS\" OR api=\"$drill_api$\"\n| search error=\"$drill_error$\"\n| table _time, api, error, statusCode, logLevel, apiDetails.body, correlationID, username, sessionID\n| sort - _time",
+                "queryParameters": {
+                    "earliest": "$dateTimeRange.earliest$",
+                    "latest": "$dateTimeRange.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ds_mostUsedApis": {
+            "name": "MostUsedApisSearch",
+            "options": {
+                "query": "index=$env$\n| spath\n| spath path=file output=f\n| search f=\"SplunkInterceptor\"\n| spath path=sourcetype output=st\n| search st=\"pmp:api:logs\"\n| spath path=apiDetails.url output=api_url\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\n| eval api_path = replace(api_path, \"\\?.*$\", \"\")\n| eval api_path = if(isnull(api_path) OR api_path=\"\", \"NULL\", api_path)\n| timechart span=1h count BY api_path limit=30",
+                "queryParameters": {
+                    "earliest": "$dateTimeRange.earliest$",
+                    "latest": "$dateTimeRange.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ds_topApiErrors": {
+            "name": "TopApiErrorsSearch",
+            "options": {
+                "query": "index=$env$\n| spath\n| spath path=file output=f\n| search f=\"SplunkInterceptor\"\n| spath path=sourcetype output=st\n| search st=\"pmp:api:logs\"\n| spath path=level output=logLevel\n| search logLevel=\"ERROR\"\n\n| spath path=apiDetails.url output=api\n\n| spath path=apiDetails.body.errorDetails.errorDetails.message output=err_msg_deep\n| spath path=apiDetails.body.errorDetails.errorDetails.code output=err_code_deep\n| spath path=apiDetails.body.errorDetails.errorDetails.type output=err_type_deep\n\n| spath path=apiDetails.body.errorDetails.error output=err_msg_simple\n\n| spath path=apiDetails.body.code output=err_code_simple\n| spath path=apiDetails.body.type output=err_type_simple\n\n| spath path=apiDetails.body{}.report.message output=report_err_msgs\n\n| eval api = if(isnull(api) OR api=\"\", \"NULL\", api)\n\n| eval error_raw = coalesce(\n    err_msg_deep,\n    err_msg_simple,\n    mvindex(report_err_msgs, 0)\n)\n| eval error_raw = if(error_raw=\"\", null(), error_raw)\n\n| eval error_full = coalesce(\n    error_raw,\n    err_type_deep . \" (code=\" . err_code_deep . \")\",\n    err_type_simple . \" (code=\" . err_code_simple . \")\",\n    \"UNKNOWN_ERROR\"\n)\n\n| rex field=error_full \"Root error type\\s*:\\s*(?<error_root_type>[^,]+)\"\n| rex field=error_full \"failed:\\s*(?<error_failed_reason>[^.]+)\"\n| rex field=error_full \"Bad Request:\\s*(?<error_bad_reason>[^.]+)\"\n| rex field=error_full \"ORA-(?<ora_code>\\d+):\\s*(?<ora_msg>.*)\"\n\n| eval error = case(\n    isnotnull(error_bad_reason),\n      error_bad_reason,\n\n    isnotnull(error_failed_reason),\n      error_failed_reason,\n\n    isnotnull(ora_code),\n      \"ORA-\" . ora_code . \": \" . ora_msg,\n\n    like(error_full, \"There is no non-service accounts for the client.%\"),\n      \"There is no non-service accounts for the client.\",\n\t  \n    true(),\n      error_full\n)\n| stats count AS count BY error\n| sort - count",
+                "queryParameters": {
+                    "earliest": "$dateTimeRange.earliest$",
+                    "latest": "$dateTimeRange.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ds_topApiErrorsUrl": {
+            "name": "TopApiErrorsWithUrlSearch",
+            "options": {
+                "query": "index=$env$\n| spath\n| spath path=file output=f\n| search f=\"SplunkInterceptor\"\n| spath path=sourcetype output=st\n| search st=\"pmp:api:logs\"\n| spath path=level output=logLevel\n| search logLevel=\"ERROR\"\n\n| spath path=apiDetails.url output=api_url\n\n| spath path=apiDetails.body.errorDetails.errorDetails.message output=err_msg_deep\n| spath path=apiDetails.body.errorDetails.errorDetails.code output=err_code_deep\n| spath path=apiDetails.body.errorDetails.errorDetails.type output=err_type_deep\n\n| spath path=apiDetails.body.errorDetails.error output=err_msg_simple\n\n| spath path=apiDetails.body.code output=err_code_simple\n| spath path=apiDetails.body.type output=err_type_simple\n\n| spath path=apiDetails.body{}.report.message output=report_err_msgs\n| eval api = replace(api_url, \"https?://[^/]+\", \"\")\n| eval api = replace(api, \"\\?.*$\", \"\")\n| eval api = if(isnull(api) OR api=\"\", \"NULL\", api)\n| eval api = if(isnull(api) OR api=\"\", \"NULL\", api)\n\n| eval error_raw = coalesce(\n    err_msg_deep,\n    err_msg_simple,\n    mvindex(report_err_msgs, 0)\n)\n| eval error_raw = if(error_raw=\"\", null(), error_raw)\n\n| eval error_full = coalesce(\n    error_raw,\n    err_type_deep . \" (code=\" . err_code_deep . \")\",\n    err_type_simple . \" (code=\" . err_code_simple . \")\",\n    \"UNKNOWN_ERROR\"\n)\n\n| rex field=error_full \"Root error type\\s*:\\s*(?<error_root_type>[^,]+)\"\n| rex field=error_full \"failed:\\s*(?<error_failed_reason>[^.]+)\"\n| rex field=error_full \"Bad Request:\\s*(?<error_bad_reason>[^.]+)\"\n| rex field=error_full \"ORA-(?<ora_code>\\d+):\\s*(?<ora_msg>.*)\"\n\n| eval error = case(\n    isnotnull(error_bad_reason),\n      error_bad_reason,\n\n    isnotnull(error_failed_reason),\n      error_failed_reason,\n\n    isnotnull(ora_code),\n      \"ORA-\" . ora_code . \": \" . ora_msg,\n\n    like(error_full, \"There is no non-service accounts for the client.%\"),\n      \"There is no non-service accounts for the client.\",\n\t  \n    true(),\n      error_full\n)\n| stats count AS count BY api, error\n| sort - count",
+                "queryParameters": {
+                    "earliest": "$dateTimeRange.earliest$",
+                    "latest": "$dateTimeRange.latest$"
+                }
+            },
+            "type": "ds.search"
+        }
+    },
+    "layout": {
+        "globalInputs": [
+            "input_DateTime",
+            "input_Environement"
+        ],
+        "layoutDefinitions": {
+            "layout_1": {
+                "options": {
+                    "height": 2200,
+                    "width": 1440
+                },
+                "structure": [
+                    {
+                        "item": "viz_apisTraficArea",
+                        "position": {
+                            "h": 400,
+                            "w": 720,
+                            "x": 0,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_topApiErrors",
+                        "position": {
+                            "h": 500,
+                            "w": 720,
+                            "x": 0,
+                            "y": 400
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_mostUsedApisArea",
+                        "position": {
+                            "h": 400,
+                            "w": 720,
+                            "x": 720,
+                            "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_topApiErrorsUrl",
+                        "position": {
+                            "h": 500,
+                            "w": 720,
+                            "x": 720,
+                            "y": 400
+                        },
+                        "type": "block"
+                    }
+                ],
+                "type": "grid"
+            }
+        },
+        "options": {
+            "submitButton": false
+        },
+        "tabs": {
+            "items": [
+                {
+                    "label": "New tab",
+                    "layoutId": "layout_1"
+                }
+            ]
+        }
+    }
+}
