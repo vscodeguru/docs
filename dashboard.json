@@ -47,6 +47,37 @@
         }
     },
     "visualizations": {
+        "viz_apiPerformance": {
+            "context": {
+                "backgroundColorEditorConfig": [
+                    {
+                        "to": 0,
+                        "value": "#9E2520"
+                    },
+                    {
+                        "from": 0,
+                        "value": "#1C6B2D"
+                    }
+                ]
+            },
+            "dataSources": {
+                "primary": "ds_apiPerformance"
+            },
+            "options": {
+                "backgroundColor": "> trendValue | rangeValue(backgroundColorEditorConfig)",
+                "numberPrecision": 1,
+                "showSparkline": true,
+                "showTrendIndicator": true,
+                "splitByLayout": "trellis",
+                "trellisMinColumnWidth": 300,
+                "trellisRowHeight": 150,
+                "trellisSplitBy": "api_path",
+                "trendDisplay": "percent",
+                "unit": ""
+            },
+            "title": "API Performance (p95 Elapsed Time by API)",
+            "type": "splunk.singlevalue"
+        },
         "viz_apisTraficArea": {
             "dataSources": {
                 "primary": "ds_apisTrafic"
@@ -62,6 +93,126 @@
             "title": "API Traffic",
             "type": "splunk.area"
         },
+        "viz_existingRegistrationFailure": {
+            "dataSources": {
+                "primary": "ds_registrationStats"
+            },
+            "eventHandlers": [
+                {
+                    "options": {
+                        "newTab": true,
+                        "type": "auto"
+                    },
+                    "type": "drilldown.linkToSearch"
+                }
+            ],
+            "options": {
+                "majorValue": "> sparklineValues | lastPoint()",
+                "primaryValue": "existing_failure",
+                "showSparkline": false,
+                "showTrendIndicator": false,
+                "sparklineValues": "> primary | seriesByName('existing_failure')",
+                "trendValue": "> sparklineValues | delta(-2)"
+            },
+            "title": "Existing Registration - Failure",
+            "type": "splunk.singlevalue"
+        },
+        "viz_existingRegistrationSuccess": {
+            "dataSources": {
+                "primary": "ds_registrationStats"
+            },
+            "eventHandlers": [
+                {
+                    "options": {
+                        "newTab": true,
+                        "type": "auto"
+                    },
+                    "type": "drilldown.linkToSearch"
+                }
+            ],
+            "options": {
+                "majorValue": "> sparklineValues | lastPoint()",
+                "primaryValue": "existing_success",
+                "showSparkline": false,
+                "showTrendIndicator": false,
+                "sparklineValues": "> primary | seriesByName('existing_success')",
+                "trendValue": "> sparklineValues | delta(-2)"
+            },
+            "title": "Existing Registration - Success",
+            "type": "splunk.singlevalue"
+        },
+        "viz_loginFailures": {
+            "dataSources": {
+                "primary": "ds_loginMetrics"
+            },
+            "eventHandlers": [
+                {
+                    "options": {
+                        "newTab": true,
+                        "type": "auto"
+                    },
+                    "type": "drilldown.linkToSearch"
+                }
+            ],
+            "options": {
+                "majorValue": "> sparklineValues | lastPoint()",
+                "sparklineDisplay": "off",
+                "sparklineValues": "> primary | seriesByName('total_login_failures')"
+            },
+            "title": "Total Login Failures",
+            "type": "splunk.singlevalue"
+        },
+        "viz_loginMetricsTitle": {
+            "options": {
+                "backgroundColor": "#a575ff",
+                "customFontSize": 20,
+                "fontSize": "custom",
+                "markdown": "Login Metrics"
+            },
+            "type": "splunk.markdown"
+        },
+        "viz_loginTotalAttempts": {
+            "dataSources": {
+                "primary": "ds_loginMetrics"
+            },
+            "eventHandlers": [
+                {
+                    "options": {
+                        "newTab": true,
+                        "type": "auto"
+                    },
+                    "type": "drilldown.linkToSearch"
+                }
+            ],
+            "options": {
+                "majorValue": "> sparklineValues | lastPoint()",
+                "sparklineDisplay": "off",
+                "sparklineValues": "> primary | seriesByName('total_login_attempts')"
+            },
+            "title": "Total Login Attempts",
+            "type": "splunk.singlevalue"
+        },
+        "viz_loginUniqueUsers": {
+            "dataSources": {
+                "primary": "ds_loginMetrics"
+            },
+            "eventHandlers": [
+                {
+                    "options": {
+                        "newTab": true,
+                        "type": "auto"
+                    },
+                    "type": "drilldown.linkToSearch"
+                }
+            ],
+            "options": {
+                "majorValue": "> sparklineValues | lastPoint()",
+                "sparklineDisplay": "off",
+                "sparklineValues": "> primary | seriesByName('unique_logged_in_users')"
+            },
+            "title": "Unique Logged-in Users",
+            "type": "splunk.singlevalue"
+        },
         "viz_mostUsedApisArea": {
             "dataSources": {
                 "primary": "ds_mostUsedApis"
@@ -70,6 +221,7 @@
                 "legend": {
                     "position": "right"
                 },
+                "stackMode": "stacked",
                 "xAxisTitleText": "timeline",
                 "y": "> primary | frameBySeriesNames('/addlocations','/cancelpendingremoval','/getAvgMonthlyBill','/getOrderDateAvailability','/getServiceOrderHistory','/getaddressautosuggest','/getagreements','/getagreementsbypremisenumbers','/getagreementsbyssn','/getcoarsegrainedaddress','/getlocations','/getsummaryoflocations','/removelocations','/sendEmailUpdateEmail','/sendRegistrationConfirmationEmail','/submitLandlordConnect','/updateAgreement','/updateUserCommAndReports','/updateuseragreementsinfr')",
                 "y2": "> primary | frameBySeriesNames('')",
@@ -77,6 +229,51 @@
             },
             "title": "Most Used APIs Over Time",
             "type": "splunk.area"
+        },
+        "viz_newRegistrationFailure": {
+            "dataSources": {
+                "primary": "ds_registrationStats"
+            },
+            "options": {
+                "majorValue": "> sparklineValues | lastPoint()",
+                "primaryValue": "new_failure",
+                "showSparkline": false,
+                "showTrendIndicator": false,
+                "sparklineValues": "> primary | seriesByName('new_failure')",
+                "trendValue": "> sparklineValues | delta(-2)"
+            },
+            "title": "New Registration - Failure",
+            "type": "splunk.singlevalue"
+        },
+        "viz_newRegistrationSuccess": {
+            "dataSources": {
+                "primary": "ds_registrationStats"
+            },
+            "eventHandlers": [
+                {
+                    "options": {
+                        "newTab": true,
+                        "type": "auto"
+                    },
+                    "type": "drilldown.linkToSearch"
+                }
+            ],
+            "options": {
+                "primaryValue": "new_success",
+                "showSparkline": false,
+                "showTrendIndicator": false
+            },
+            "title": "New Registration - Success",
+            "type": "splunk.singlevalue"
+        },
+        "viz_registrationMetricsTitle": {
+            "options": {
+                "backgroundColor": "#a575ff",
+                "customFontSize": 20,
+                "fontSize": "custom",
+                "markdown": "Registration Metrics"
+            },
+            "type": "splunk.markdown"
         },
         "viz_topApiErrors": {
             "context": {
@@ -188,6 +385,17 @@
         }
     },
     "dataSources": {
+        "ds_apiPerformance": {
+            "name": "ApiPerformanceSearch",
+            "options": {
+                "query": "index=$env$\r\n| spath\r\n| spath path=file output=f\r\n| search f=\"SplunkInterceptor\"\r\n| spath path=sourcetype output=st\r\n| search st=\"pmp:api:logs\"\r\n| spath path=apiDetails.url output=api_url\r\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\r\n| eval api_path = replace(api_path, \"\\?.*$\", \"\")\r\n| eval api_path = if(isnull(api_path) OR api_path=\"\", \"NULL\", api_path)\r\n| spath path=apiDetails.elapsedTime output=elapsed_time\r\n| eval elapsed_time = tonumber(elapsed_time)\r\n| eval elapsed_time_sec = elapsed_time / 1000.0\r\n| bin _time span=5m\r\n| stats\r\n    avg(elapsed_time_sec)      AS avg_sec_raw\r\n    perc95(elapsed_time_sec)   AS p95_sec_raw\r\n    perc99(elapsed_time_sec)   AS p99_sec_raw\r\n  BY api_path _time\r\n| eval avg_sec = round(avg_sec_raw, 1)\r\n| eval p95_sec = round(p95_sec_raw, 1)\r\n| eval p99_sec = round(p99_sec_raw, 1)\r\n| eventstats latest(_time) AS latestTime BY api_path\r\n| eventstats latest(p95_sec) AS current_p95_sec BY api_path\r\n| eval perf_band = case(\r\n    current_p95_sec <= 1.0, \"fast\",\r\n    current_p95_sec <= 2.0, \"medium\",\r\n    1=1, \"slow\"\r\n  )\r\n| sort - current_p95_sec api_path\r\n",
+                "queryParameters": {
+                    "earliest": "$dateTimeRange.earliest$",
+                    "latest": "$dateTimeRange.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
         "ds_apisTrafic": {
             "name": "ApisTrafficSearch",
             "options": {
@@ -210,10 +418,32 @@
             },
             "type": "ds.search"
         },
+        "ds_loginMetrics": {
+            "name": "LoginMetricsSearch",
+            "options": {
+                "query": "index=$env$\n| spath\n| spath path=file output=f\n| search f=\"SignInRedirectCallbackComponent\"\n| search level=\"INFO\" OR level=\"ERROR\"\n| eval email = coalesce(email, userEmail, username, user)\n| eval is_failure = if(level=\"ERROR\", 1, 0)\n| eval success_email = if(level=\"INFO\" AND is_failure=0, email, null())\n| stats count AS total_login_attempts\n        sum(is_failure) AS total_login_failures\n        dc(success_email) AS unique_logged_in_users",
+                "queryParameters": {
+                    "earliest": "$dateTimeRange.earliest$",
+                    "latest": "$dateTimeRange.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
         "ds_mostUsedApis": {
             "name": "MostUsedApisSearch",
             "options": {
                 "query": "index=$env$\n| spath\n| spath path=file output=f\n| search f=\"SplunkInterceptor\"\n| spath path=sourcetype output=st\n| search st=\"pmp:api:logs\"\n| spath path=apiDetails.url output=api_url\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\n| eval api_path = replace(api_path, \"\\?.*$\", \"\")\n| eval api_path = if(isnull(api_path) OR api_path=\"\", \"NULL\", api_path)\n| timechart span=1h count BY api_path limit=30",
+                "queryParameters": {
+                    "earliest": "$dateTimeRange.earliest$",
+                    "latest": "$dateTimeRange.latest$"
+                }
+            },
+            "type": "ds.search"
+        },
+        "ds_registrationStats": {
+            "name": "RegistrationStatsSearch",
+            "options": {
+                "query": "index=$env$\n| spath\n| spath path=file output=f\n| search f=\"SplunkInterceptor\"\n| spath path=sourcetype output=st\n| search st=\"pmp:api:logs\"\n| spath path=apiDetails.url output=api_url\n| spath path=apiDetails.success output=api_success\n| spath path=apiDetails.body.success output=body_success\n| spath path=apiDetails.body.statusCode output=body_statusCode\n| spath path=apiDetails.headers.isNewRegistration output=isNewRegistration_raw\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\n| eval api_path = replace(api_path, \"\\\\?.*$\", \"\")\n| where like(api_path, \"/updateuseragreementsinfr%\")\n| eval api_success_flag = lower(tostring(api_success))\n| eval body_success_flag = lower(tostring(body_success))\n| eval body_statusCode = tonumber(body_statusCode)\n| eval outcome = case(\n    api_success_flag==\"true\" OR body_success_flag==\"true\",  \"Success\",\n    api_success_flag==\"false\" OR body_success_flag==\"false\", \"Failure\",\n    body_statusCode>=200 AND body_statusCode<300,              \"Success\",\n    body_statusCode>=400,                                      \"Failure\",\n    true(),                                                     \"Other\")\n| eval isNew_flag = lower(tostring(isNewRegistration_raw))\n| eval registrationType = case(\n    isNew_flag==\"true\" OR isNew_flag==\"1\",  \"New\",\n    isNew_flag==\"false\" OR isNew_flag==\"0\", \"Existing\",\n    true(),                                      \"Existing\")\n| stats \n    count(eval(registrationType==\"New\"      AND outcome==\"Success\"))   as new_success,\n    count(eval(registrationType==\"New\"      AND outcome==\"Failure\"))   as new_failure,\n    count(eval(registrationType==\"Existing\" AND outcome==\"Success\"))   as existing_success,\n    count(eval(registrationType==\"Existing\" AND outcome==\"Failure\"))   as existing_failure",
                 "queryParameters": {
                     "earliest": "$dateTimeRange.earliest$",
                     "latest": "$dateTimeRange.latest$"
@@ -257,12 +487,32 @@
                 },
                 "structure": [
                     {
-                        "item": "viz_apisTraficArea",
+                        "item": "viz_loginMetricsTitle",
                         "position": {
-                            "h": 400,
-                            "w": 720,
+                            "h": 40,
+                            "w": 1440,
                             "x": 0,
                             "y": 0
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_registrationMetricsTitle",
+                        "position": {
+                            "h": 40,
+                            "w": 1440,
+                            "x": 0,
+                            "y": 240
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_newRegistrationSuccess",
+                        "position": {
+                            "h": 200,
+                            "w": 360,
+                            "x": 0,
+                            "y": 280
                         },
                         "type": "block"
                     },
@@ -272,17 +522,27 @@
                             "h": 500,
                             "w": 720,
                             "x": 0,
-                            "y": 400
+                            "y": 480
                         },
                         "type": "block"
                     },
                     {
-                        "item": "viz_mostUsedApisArea",
+                        "item": "viz_apisTraficArea",
                         "position": {
-                            "h": 400,
+                            "h": 500,
                             "w": 720,
-                            "x": 720,
-                            "y": 0
+                            "x": 0,
+                            "y": 980
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_newRegistrationFailure",
+                        "position": {
+                            "h": 200,
+                            "w": 360,
+                            "x": 360,
+                            "y": 280
                         },
                         "type": "block"
                     },
@@ -292,7 +552,77 @@
                             "h": 500,
                             "w": 720,
                             "x": 720,
-                            "y": 400
+                            "y": 480
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_mostUsedApisArea",
+                        "position": {
+                            "h": 500,
+                            "w": 720,
+                            "x": 720,
+                            "y": 980
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_existingRegistrationSuccess",
+                        "position": {
+                            "h": 200,
+                            "w": 360,
+                            "x": 720,
+                            "y": 280
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_existingRegistrationFailure",
+                        "position": {
+                            "h": 200,
+                            "w": 360,
+                            "x": 1080,
+                            "y": 280
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_loginTotalAttempts",
+                        "position": {
+                            "h": 200,
+                            "w": 480,
+                            "x": 0,
+                            "y": 40
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_loginFailures",
+                        "position": {
+                            "h": 200,
+                            "w": 480,
+                            "x": 480,
+                            "y": 40
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_loginUniqueUsers",
+                        "position": {
+                            "h": 200,
+                            "w": 480,
+                            "x": 960,
+                            "y": 40
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_apiPerformance",
+                        "position": {
+                            "h": 900,
+                            "w": 1440,
+                            "x": 0,
+                            "y": 1480
                         },
                         "type": "block"
                     }
