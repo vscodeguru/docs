@@ -47,16 +47,73 @@
         }
     },
     "visualizations": {
+        "viz_apiPerfLegend": {
+            "options": {
+                "markdown": "### 📘 API Performance Legend\n\n**Major Value (sec)**\n- Shows *current* p95 response time in seconds.\n- This is the latest p95 value in the selected time range.\n\n**Trend (% Change)**\n- Measures *relative degradation or improvement* vs the API’s own average for the selected period.\n- **Positive %** → API is *slower* than its typical performance.\n- **Negative %** → API is *faster* (improved).\n\n**Color Scale (Based on Trend %)**\n- **🟩 Green** → Trend ≤ 0% (performing better or equal to baseline)\n- **🟨 Yellow** → 0% to 20% (slightly slower than baseline)\n- **🟧 Orange** → 20% to 170% (moderate degradation)\n- **🟥 Red** → 170% to 500%+ (major degradation)\n\n**Ordering**\n- APIs are sorted by *highest degradation first*, so worst-performing APIs appear at the top-left.\n"
+            },
+            "title": "Legend: How to Read This Panel",
+            "type": "splunk.markdown"
+        },
         "viz_apiPerformance": {
             "context": {
                 "backgroundColorEditorConfig": [
                     {
                         "to": 0,
-                        "value": "#9E2520"
+                        "value": "#1C6B2D"
                     },
                     {
                         "from": 0,
-                        "value": "#1C6B2D"
+                        "to": 20,
+                        "value": "#FFCC00"
+                    },
+                    {
+                        "from": 20,
+                        "to": 70,
+                        "value": "#FF9900"
+                    },
+                    {
+                        "from": 70,
+                        "to": 120,
+                        "value": "#FF6600"
+                    },
+                    {
+                        "from": 120,
+                        "to": 170,
+                        "value": "#FF3300"
+                    },
+                    {
+                        "from": 170,
+                        "to": 220,
+                        "value": "#FF0000"
+                    },
+                    {
+                        "from": 220,
+                        "to": 270,
+                        "value": "#CC0000"
+                    },
+                    {
+                        "from": 270,
+                        "to": 320,
+                        "value": "#990000"
+                    },
+                    {
+                        "from": 320,
+                        "to": 370,
+                        "value": "#800000"
+                    },
+                    {
+                        "from": 370,
+                        "to": 420,
+                        "value": "#660000"
+                    },
+                    {
+                        "from": 420,
+                        "to": 470,
+                        "value": "#4D0000"
+                    },
+                    {
+                        "from": 470,
+                        "value": "#330000"
                     }
                 ]
             },
@@ -65,17 +122,21 @@
             },
             "options": {
                 "backgroundColor": "> trendValue | rangeValue(backgroundColorEditorConfig)",
+                "majorValue": "> sparklineValues | lastPoint()",
                 "numberPrecision": 1,
                 "showSparkline": true,
                 "showTrendIndicator": true,
+                "sparklineValues": "> primary | seriesByName(\"p95_sec\")",
                 "splitByLayout": "trellis",
-                "trellisMinColumnWidth": 300,
+                "trellisColumns": 5,
+                "trellisMinColumnWidth": 260,
                 "trellisRowHeight": 150,
                 "trellisSplitBy": "api_path",
                 "trendDisplay": "percent",
-                "unit": ""
+                "trendValue": "> primary | seriesByName(\"trend_pct\") | lastPoint()",
+                "unit": " sec"
             },
-            "title": "API Performance (p95 Elapsed Time by API)",
+            "title": "API Performance (Relative to Selected Period)",
             "type": "splunk.singlevalue"
         },
         "viz_apisTraficArea": {
@@ -388,7 +449,7 @@
         "ds_apiPerformance": {
             "name": "ApiPerformanceSearch",
             "options": {
-                "query": "index=$env$\r\n| spath\r\n| spath path=file output=f\r\n| search f=\"SplunkInterceptor\"\r\n| spath path=sourcetype output=st\r\n| search st=\"pmp:api:logs\"\r\n| spath path=apiDetails.url output=api_url\r\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\r\n| eval api_path = replace(api_path, \"\\?.*$\", \"\")\r\n| eval api_path = if(isnull(api_path) OR api_path=\"\", \"NULL\", api_path)\r\n| spath path=apiDetails.elapsedTime output=elapsed_time\r\n| eval elapsed_time = tonumber(elapsed_time)\r\n| eval elapsed_time_sec = elapsed_time / 1000.0\r\n| bin _time span=5m\r\n| stats\r\n    avg(elapsed_time_sec)      AS avg_sec_raw\r\n    perc95(elapsed_time_sec)   AS p95_sec_raw\r\n    perc99(elapsed_time_sec)   AS p99_sec_raw\r\n  BY api_path _time\r\n| eval avg_sec = round(avg_sec_raw, 1)\r\n| eval p95_sec = round(p95_sec_raw, 1)\r\n| eval p99_sec = round(p99_sec_raw, 1)\r\n| eventstats latest(_time) AS latestTime BY api_path\r\n| eventstats latest(p95_sec) AS current_p95_sec BY api_path\r\n| eval perf_band = case(\r\n    current_p95_sec <= 1.0, \"fast\",\r\n    current_p95_sec <= 2.0, \"medium\",\r\n    1=1, \"slow\"\r\n  )\r\n| sort - current_p95_sec api_path\r\n",
+                "query": "index=$env$\r\n| spath\r\n| spath path=file output=f\r\n| search f=\"SplunkInterceptor\"\r\n| spath path=sourcetype output=st\r\n| search st=\"pmp:api:logs\"\r\n| spath path=apiDetails.url output=api_url\r\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\r\n| eval api_path = replace(api_path, \"\\?.*$\", \"\")\r\n| eval api_path = if(isnull(api_path) OR api_path=\"\", \"NULL\", api_path)\r\n| spath path=apiDetails.elapsedTime output=elapsed_time\r\n| eval elapsed_time = tonumber(elapsed_time)\r\n| eval elapsed_time_sec = elapsed_time / 1000.0\r\n| bin _time span=10m\r\n| stats \r\n    avg(elapsed_time_sec) AS avg_sec_raw\r\n    perc95(elapsed_time_sec) AS p95_sec_raw\r\n    perc99(elapsed_time_sec) AS p99_sec_raw\r\n  BY api_path _time\r\n| eval avg_sec = round(avg_sec_raw, 1)\r\n| eval p95_sec = round(p95_sec_raw, 1)\r\n| eval p99_sec = round(p99_sec_raw, 1)\r\n| eventstats avg(p95_sec) AS period_p95_avg BY api_path\r\n| eval trend_pct = if(period_p95_avg > 0,\r\n                      round(((p95_sec - period_p95_avg) / period_p95_avg) * 100, 1),\r\n                      0)\r\n| eventstats latest(p95_sec) AS current_p95_sec BY api_path\r\n| sort - trend_pct",
                 "queryParameters": {
                     "earliest": "$dateTimeRange.earliest$",
                     "latest": "$dateTimeRange.latest$"
@@ -497,6 +558,16 @@
                         "type": "block"
                     },
                     {
+                        "item": "viz_loginTotalAttempts",
+                        "position": {
+                            "h": 200,
+                            "w": 480,
+                            "x": 0,
+                            "y": 40
+                        },
+                        "type": "block"
+                    },
+                    {
                         "item": "viz_registrationMetricsTitle",
                         "position": {
                             "h": 40,
@@ -537,11 +608,51 @@
                         "type": "block"
                     },
                     {
+                        "item": "viz_apiPerformance",
+                        "position": {
+                            "h": 900,
+                            "w": 1440,
+                            "x": 0,
+                            "y": 1480
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_apiPerfLegend",
+                        "position": {
+                            "h": 400,
+                            "w": 1440,
+                            "x": 0,
+                            "y": 2380
+                        },
+                        "type": "block"
+                    },
+                    {
                         "item": "viz_newRegistrationFailure",
                         "position": {
                             "h": 200,
                             "w": 360,
                             "x": 360,
+                            "y": 280
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_loginFailures",
+                        "position": {
+                            "h": 200,
+                            "w": 480,
+                            "x": 480,
+                            "y": 40
+                        },
+                        "type": "block"
+                    },
+                    {
+                        "item": "viz_existingRegistrationSuccess",
+                        "position": {
+                            "h": 200,
+                            "w": 360,
+                            "x": 720,
                             "y": 280
                         },
                         "type": "block"
@@ -567,46 +678,6 @@
                         "type": "block"
                     },
                     {
-                        "item": "viz_existingRegistrationSuccess",
-                        "position": {
-                            "h": 200,
-                            "w": 360,
-                            "x": 720,
-                            "y": 280
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "viz_existingRegistrationFailure",
-                        "position": {
-                            "h": 200,
-                            "w": 360,
-                            "x": 1080,
-                            "y": 280
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "viz_loginTotalAttempts",
-                        "position": {
-                            "h": 200,
-                            "w": 480,
-                            "x": 0,
-                            "y": 40
-                        },
-                        "type": "block"
-                    },
-                    {
-                        "item": "viz_loginFailures",
-                        "position": {
-                            "h": 200,
-                            "w": 480,
-                            "x": 480,
-                            "y": 40
-                        },
-                        "type": "block"
-                    },
-                    {
                         "item": "viz_loginUniqueUsers",
                         "position": {
                             "h": 200,
@@ -617,12 +688,12 @@
                         "type": "block"
                     },
                     {
-                        "item": "viz_apiPerformance",
+                        "item": "viz_existingRegistrationFailure",
                         "position": {
-                            "h": 900,
-                            "w": 1440,
-                            "x": 0,
-                            "y": 1480
+                            "h": 200,
+                            "w": 360,
+                            "x": 1080,
+                            "y": 280
                         },
                         "type": "block"
                     }
