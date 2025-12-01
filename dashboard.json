@@ -58,62 +58,22 @@
             "context": {
                 "backgroundColorEditorConfig": [
                     {
+                        "to": -20,
+                        "value": "#FF3300"
+                    },
+                    {
+                        "from": -20,
                         "to": 0,
-                        "value": "#1C6B2D"
+                        "value": "#FFCC00"
                     },
                     {
                         "from": 0,
                         "to": 20,
-                        "value": "#FFCC00"
+                        "value": "#99CC33"
                     },
                     {
                         "from": 20,
-                        "to": 70,
-                        "value": "#FF9900"
-                    },
-                    {
-                        "from": 70,
-                        "to": 120,
-                        "value": "#FF6600"
-                    },
-                    {
-                        "from": 120,
-                        "to": 170,
-                        "value": "#FF3300"
-                    },
-                    {
-                        "from": 170,
-                        "to": 220,
-                        "value": "#FF0000"
-                    },
-                    {
-                        "from": 220,
-                        "to": 270,
-                        "value": "#CC0000"
-                    },
-                    {
-                        "from": 270,
-                        "to": 320,
-                        "value": "#990000"
-                    },
-                    {
-                        "from": 320,
-                        "to": 370,
-                        "value": "#800000"
-                    },
-                    {
-                        "from": 370,
-                        "to": 420,
-                        "value": "#660000"
-                    },
-                    {
-                        "from": 420,
-                        "to": 470,
-                        "value": "#4D0000"
-                    },
-                    {
-                        "from": 470,
-                        "value": "#330000"
+                        "value": "#1C6B2D"
                     }
                 ]
             },
@@ -132,8 +92,7 @@
                 "trellisMinColumnWidth": 260,
                 "trellisRowHeight": 150,
                 "trellisSplitBy": "api_path",
-                "trendDisplay": "percent",
-                "trendValue": "> primary | seriesByName(\"trend_pct\") | lastPoint()",
+                "trendValue": "> primary | seriesByName(\"trend_pct\") | firstPoint()",
                 "unit": " sec"
             },
             "title": "API Performance (Relative to Selected Period)",
@@ -449,7 +408,7 @@
         "ds_apiPerformance": {
             "name": "ApiPerformanceSearch",
             "options": {
-                "query": "index=$env$\r\n| spath\r\n| spath path=file output=f\r\n| search f=\"SplunkInterceptor\"\r\n| spath path=sourcetype output=st\r\n| search st=\"pmp:api:logs\"\r\n| spath path=apiDetails.url output=api_url\r\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\r\n| eval api_path = replace(api_path, \"\\?.*$\", \"\")\r\n| eval api_path = if(isnull(api_path) OR api_path=\"\", \"NULL\", api_path)\r\n| spath path=apiDetails.elapsedTime output=elapsed_time\r\n| eval elapsed_time = tonumber(elapsed_time)\r\n| eval elapsed_time_sec = elapsed_time / 1000.0\r\n| bin _time span=10m\r\n| stats \r\n    avg(elapsed_time_sec) AS avg_sec_raw\r\n    perc95(elapsed_time_sec) AS p95_sec_raw\r\n    perc99(elapsed_time_sec) AS p99_sec_raw\r\n  BY api_path _time\r\n| eval avg_sec = round(avg_sec_raw, 1)\r\n| eval p95_sec = round(p95_sec_raw, 1)\r\n| eval p99_sec = round(p99_sec_raw, 1)\r\n| eventstats avg(p95_sec) AS period_p95_avg BY api_path\r\n| eval trend_pct = if(period_p95_avg > 0,\r\n                      round(((p95_sec - period_p95_avg) / period_p95_avg) * 100, 1),\r\n                      0)\r\n| eventstats latest(p95_sec) AS current_p95_sec BY api_path\r\n| sort - trend_pct",
+                "query": "index=$env$\r\n| spath\r\n| spath path=file output=f\r\n| search f=\"SplunkInterceptor\"\r\n| spath path=sourcetype output=st\r\n| search st=\"pmp:api:logs\"\r\n| spath path=apiDetails.url output=api_url\r\n| eval api_path = replace(api_url, \"https?://[^/]+\", \"\")\r\n| eval api_path = replace(api_path, \"\\?.*$\", \"\")\r\n| eval api_path = if(isnull(api_path) OR api_path=\"\", \"NULL\", api_path)\r\n| spath path=apiDetails.elapsedTime output=elapsed_time\r\n| eval elapsed_time = tonumber(elapsed_time)\r\n| eval elapsed_time_sec = elapsed_time / 1000.0\r\n| bin _time span=10m\r\n| stats avg(elapsed_time_sec) AS avg_sec_raw perc95(elapsed_time_sec) AS p95_sec_raw perc99(elapsed_time_sec) AS p99_sec_raw BY api_path _time\r\n| eval avg_sec = round(avg_sec_raw, 1)\r\n| eval p95_sec = round(p95_sec_raw, 1)\r\n| eval p99_sec = round(p99_sec_raw, 1)\r\n| eventstats avg(p95_sec) AS period_p95_avg BY api_path\r\n| eval trend_pct = if(period_p95_avg > 0, round(((period_p95_avg - p95_sec) / period_p95_avg) * 100, 1), 0)\r\n| eventstats latest(p95_sec) AS current_p95_sec BY api_path\r\n| sort 0 - _time",
                 "queryParameters": {
                     "earliest": "$dateTimeRange.earliest$",
                     "latest": "$dateTimeRange.latest$"
